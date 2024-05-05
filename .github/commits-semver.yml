@@ -1,0 +1,16 @@
+scopes:
+  print-summary: true
+  create-gh-release: true
+  list:
+    - key: tfm
+      files:
+        - "terraform/**"
+      versioning:
+        file: terraform/version.json
+        changelog: terraform/CHANGELOG.md
+    - key: conf
+      files:
+        - "configuration/**"
+      versioning:
+        file: configuration/version.json
+        changelog: configuration/CHANGELOG.md

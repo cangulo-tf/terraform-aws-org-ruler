@@ -1,0 +1,74 @@
+name: "terraform-plan"
+inputs:
+  terraform-folder:
+    description: "folder containing terraform file (*.tf)"
+    required: true
+  terraform-vars-file:
+    description: "file with the terraform variables (.tfvars or .tfvars.json)"
+    required: true
+  terraform-plan-file:
+    description: "file where terraform will put the proposed plan"
+    required: true
+  backend-s3-bucket:
+    description: "s3 bucket to store the tfstate file"
+    required: true
+  backend-key:
+    description: "key to store the tfstate file"
+    required: true
+  backend-region:
+    description: "region where the s3 bucket is located"
+    required: true
+  destroy-mode:
+    description: "Plans a destroy action. false(default value)=>normal flow, true=>destroy mode."
+    required: false
+    default: "false"
+  export-plan-as-json:
+    description: "boolean to export the terraform plan as json using `terraform show -json`"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: change to terraform folder
+      shell: bash
+      id: tf-params
+      run: |
+        working_folder=$(pwd)
+        TFVARS_FILE="$working_folder/${{ inputs.terraform-vars-file }}"
+        TFPLAN_OUTPUT="$working_folder/${{ inputs.terraform-plan-file }}"
+
+        echo "tfvars_file=$(echo $TFVARS_FILE)"       >> $GITHUB_OUTPUT
+        echo "tfplan_output=$(echo $TFPLAN_OUTPUT)"   >> $GITHUB_OUTPUT
+
+    - name: terraform init
+      shell: bash
+      run: |
+        terraform -chdir="${{ inputs.terraform-folder}}" init       \
+          -backend-config="bucket=${{ inputs.backend-s3-bucket }}"  \
+          -backend-config="key=${{ inputs.backend-key }}"           \
+          -backend-config="region=${{ inputs.backend-region }}"
+
+    - name: terraform plan
+      if: ${{ inputs.destroy-mode == 'false' }}
+      shell: bash
+      run: |
+        terraform -chdir="${{ inputs.terraform-folder}}" plan     \
+          -var-file="${{ steps.tf-params.outputs.tfvars_file }}"  \
+          -out="${{ steps.tf-params.outputs.tfplan_output }}"
+
+    - name: terraform plan DESTROY
+      if: ${{ inputs.destroy-mode == 'true' }}
+      shell: bash
+      run: |
+        terraform -chdir="${{ inputs.terraform-folder}}" plan     \
+          -var-file="${{ steps.tf-params.outputs.tfvars_file }}"  \
+          -out="${{ steps.tf-params.outputs.tfplan_output }}"     \
+          -destroy
+
+    - name: export terraform plan as JSON
+      if: ${{ inputs.export-plan-as-json == 'true' }}
+      shell: bash
+      run: |
+        terraform -chdir="${{ inputs.terraform-folder}}" show     \
+          -json "${{ steps.tf-params.outputs.tfplan_output }}"    \
+          >> "${{ steps.tf-params.outputs.tfplan_output }}.json"

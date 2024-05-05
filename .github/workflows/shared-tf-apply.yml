@@ -1,0 +1,75 @@
+name: 🗺️ shared-tf-apply
+on:
+  workflow_call:
+    inputs:
+      workspaces:
+        type: string
+        description: "workspaces keys in JSON format to be used for naming the workflow"
+        required: true
+      destroy-mode:
+        type: boolean
+        required: false
+        default: false
+      apply:
+        type: boolean
+        required: true
+      enable-gh-environment:
+        type: boolean
+        required: false
+        default: false
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ROOT_AK }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ROOT_SK }}
+
+jobs:
+  tf:
+    name: ${{ matrix.workspace }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.enable-gh-environment && matrix.workspace || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(inputs.workspaces) }}
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref || github.ref_name }} # if any previous job did a commit, this ensures those are checkout here
+
+      - name: 🗺️ Terraform Plan
+        uses: ./.github/actions/terraform-plan
+        with:
+          terraform-folder: terraform
+          terraform-vars-file: ${{ matrix.tfvars }}
+          terraform-plan-file: ${{ matrix.tfplan }}
+          backend-s3-bucket: ${{ vars.TF_STATE_S3_BUCKET }} # Repository Environment Variable
+          backend-key: ${{ matrix.backendKey }}
+          backend-region: ${{ env.AWS_REGION }}
+          destroy-mode: ${{ inputs.destroy-mode }}
+          export-plan-as-json: true
+
+      - name: 🏗️ Build a summary
+        if: ${{ !inputs.destroy-mode }}
+        uses: ohpensource/terraform-plan-summarize-gh-action/summarize@v0.1.3
+        with:
+          json-terraform-plan-file: ${{ matrix.tfplan }}.json
+          environment: ${{ matrix.workspace }}
+          print-summary: false
+          attach-markdown-summary: false
+          attach-csv-summary: false
+          attach-json-summary: true
+
+      - name: 🔥 Terraform Apply
+        uses: ./.github/actions/terraform-apply
+        if: ${{ inputs.apply }}
+        with:
+          terraform-folder: terraform
+          terraform-plan-file: ${{ matrix.tfplan }}
+          backend-s3-bucket: ${{ vars.TF_STATE_S3_BUCKET }} # Repository Environment Variable
+          backend-key: ${{ matrix.backendKey }}
+          backend-region: ${{ env.AWS_REGION }}
+          export-outputs: true
+          terraform-outputs-file: ${{ matrix.tfoutputs }}

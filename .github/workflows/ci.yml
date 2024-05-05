@@ -1,0 +1,61 @@
+name: 👮‍♂️ continuous-integration
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-commits:
+    name: 📄 validate commits
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Conventional Commits
+        uses: cangulo-actions/conventional-commits-validator@main
+        with:
+          configuration: .github/commits-semver.yml
+          calculate-next-release: true
+          label-pr-with-release-type: true
+          label-pr-with-commit-types: true
+
+  list-changes:
+    name: 📜 list changes
+    uses: ./.github/workflows/shared-get-changes.yml
+
+  tfm:
+    name: 📃 Plan workspaces
+    if: ${{ needs.list-changes.outputs.conf != '[]' }}
+    needs: list-changes
+    uses: ./.github/workflows/shared-tf-apply.yml
+    with:
+      workspaces: ${{ needs.list-changes.outputs.conf }}
+      apply: false
+    secrets: inherit
+
+  tfm-checks:
+    name: 🚔️ Terraform checks
+    if: ${{ needs.list-changes.outputs.conf != '[]' }}
+    needs: list-changes
+    uses: ./.github/workflows/shared-tfm-checks.yml
+
+  aggregate-plans:
+    name: 📖 aggregate tf plans
+    runs-on: ubuntu-latest
+    needs:
+      - tfm
+    if: ${{ always() && !cancelled() && !failure() &&
+      needs.list-changes.outputs.conf != '[]' }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        id: download
+        uses: actions/download-artifact@v3
+      - name: Aggregate results
+        uses: ohpensource/terraform-plan-summarize-gh-action/aggregate@v0.1.3
+        with:
+          print-summary: true
+          attach-markdown-summary: true
+          attach-csv-summary: false
