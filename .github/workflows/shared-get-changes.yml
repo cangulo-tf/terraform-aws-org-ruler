@@ -1,0 +1,48 @@
+name: get changes
+
+on:
+  workflow_call:
+    outputs:
+      conf:
+        value: ${{ jobs.get-changes.outputs.conf }}
+
+jobs:
+  get-changes:
+    name: detect tf workspaces modified
+    runs-on: ubuntu-latest
+    outputs:
+      conf: ${{ steps.get-workspaces.outputs.workspaces }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.0
+      - name: Paths Changes Filter
+        uses: dorny/paths-filter@v3.0.2
+        id: changes
+        with:
+          list-files: json
+          filters: |
+            conf:
+                - added|modified: 'configuration/**'
+            tfm:
+                - 'terraform/**'
+      - name: List workspaces
+        uses: actions/github-script@v7
+        id: get-workspaces
+        env:
+          TFM_MODIFIED: ${{ steps.changes.outputs.tfm }}
+          CONF_MODIFIED: ${{ steps.changes.outputs.conf }}
+        with:
+          script: |
+            let workspaces  = []
+            if(process.env.TFM_MODIFIED == 'true' || process.env.CONF_MODIFIED == 'true') {
+              workspaces = [{
+                workspace: 'cangulo-aws-root',
+                tfvars: 'configuration/cangulo-aws-root.tfvars',
+                tfplan: 'configuration/cangulo-aws-root.tfplan',
+                tfoutputs: 'configuration/cangulo-aws-root.tfoutputs.json',
+                backendKey: 'configuration/cangulo-aws-root.tfstate'
+              }]
+            }
+
+            console.log(`workspaces:`, workspaces)
+            core.setOutput('workspaces', workspaces)

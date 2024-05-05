@@ -1,0 +1,67 @@
+name: 🚀 continuous-delivery
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  semver:
+    name: 🚀 release new version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.CANGULO_BOT_PUSH_COMMITS }} # required for pushing to main, it is a protected branch
+
+      - name: release new version
+        uses: cangulo-actions/semver@0.10.0
+        id: semver
+        with:
+          configuration: .github/commits-semver.yml
+          create-gh-release: true
+          print-summary: true
+          print-annotations: true
+          include-previous-non-releasable-commits: true
+
+  list-changes:
+    name: 📜 list changes
+    uses: ./.github/workflows/shared-get-changes.yml
+
+  tfm:
+    name: 📃 Plan workspaces
+    if: ${{ needs.list-changes.outputs.conf != '[]' }}
+    needs: list-changes
+    uses: ./.github/workflows/shared-tf-apply.yml
+    with:
+      workspaces: ${{ needs.list-changes.outputs.conf }}
+      apply: true
+      enable-gh-environment: true
+    secrets: inherit
+
+  tfm-checks:
+    name: 🚔️ Terraform checks
+    if: ${{ needs.list-changes.outputs.conf != '[]' }}
+    needs: list-changes
+    uses: ./.github/workflows/shared-tfm-checks.yml
+
+  aggregate-plans:
+    name: 📖 aggregate tf plans
+    runs-on: ubuntu-latest
+    needs:
+      - tfm
+    if: ${{ always() && !cancelled() && !failure() &&
+      needs.list-changes.outputs.conf != '[]' }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        id: download
+        uses: actions/download-artifact@v3
+      - name: Aggregate results
+        uses: ohpensource/terraform-plan-summarize-gh-action/aggregate@v0.1.3
+        with:
+          print-summary: true
+          attach-markdown-summary: true
+          attach-csv-summary: false

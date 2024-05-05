@@ -1,0 +1,60 @@
+name: "terraform-plan"
+inputs:
+  terraform-folder:
+    description: "folder containing terraform file (*.tf)"
+    required: true
+  terraform-plan-file:
+    description: "file where terraform will put the proposed plan"
+    required: true
+  backend-s3-bucket:
+    description: "s3 bucket to store the tfstate file"
+    required: true
+  backend-key:
+    description: "key to store the tfstate file"
+    required: true
+  backend-region:
+    description: "region where the s3 bucket is located"
+    required: true
+  export-outputs:
+    description: "boolean to export the terraform outputs as json using `terraform output -json`"
+    required: true
+  terraform-outputs-file:
+    description: "File where terraform will print the configuration outputs"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: change to terraform folder
+      shell: bash
+      id: tf-params
+      run: |
+        working_folder=$(pwd)
+        TFVARS_FILE="$working_folder/${{ inputs.terraform-vars-file }}"
+        TFPLAN_FILE="$working_folder/${{ inputs.terraform-plan-file }}"
+        TFOUTPUTS_FILE="$working_folder/${{ inputs.terraform-outputs-file }}"
+
+        echo "tfvars_file=$(echo $TFVARS_FILE)"       >> $GITHUB_OUTPUT
+        echo "tfplan_file=$(echo $TFPLAN_FILE)"       >> $GITHUB_OUTPUT
+        echo "tfoutputs_file=$(echo $TFOUTPUTS_FILE)" >> $GITHUB_OUTPUT
+
+    - name: terraform init
+      shell: bash
+      run: |
+        terraform -chdir="${{ inputs.terraform-folder}}" init       \
+          -backend-config="bucket=${{ inputs.backend-s3-bucket }}"  \
+          -backend-config="key=${{ inputs.backend-key }}"           \
+          -backend-config="region=${{ inputs.backend-region }}"
+
+    - name: terraform apply
+      shell: bash
+      run: |
+        terraform -chdir="${{ inputs.terraform-folder}}" apply \
+          "${{ steps.tf-params.outputs.tfplan_file }}"
+
+    - name: terraform outputs
+      if: ${{ inputs.export-outputs == 'true' }}
+      shell: bash
+      run: |
+        terraform -chdir="${{ inputs.terraform-folder}}" output     \
+          -json >> "${{ steps.tf-params.outputs.tfoutputs_file }}"
