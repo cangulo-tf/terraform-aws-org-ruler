@@ -6,5 +6,5 @@ updates:
     schedule:
       interval: "weekly"
     commit-message:
-      prefix: "fix: updated GH actions dependencies."
+      prefix: "ci: [gh-actions] updated versions"
       include: "scope"
