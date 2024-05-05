@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate Conventional Commits
-        uses: cangulo-actions/conventional-commits-validator@main
+        uses: cangulo-actions/conventional-commits-validator@0.5.0
         with:
           configuration: .github/commits-semver.yml
           calculate-next-release: true
