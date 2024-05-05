@@ -1,3 +1,8 @@
+# 0.0.3 fix: [cd.yml] updated semver config (#7)
+
+## patches:
+* fix: [cd.yml] updated semver config (#7)
+
 # 0.0.2 fix: [ci.yml] update GH commit validator gh action version (#5)
 
 ## patches:
