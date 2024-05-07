@@ -1,3 +1,8 @@
+# 0.1.1 fix(tfm,conf): fixed AWS budgets (#9)
+
+## patches:
+* fix(tfm,conf): fixed AWS budgets (#9)
+
 # 0.1.0 feat(tfm,conf): added AWS budgets (#8)
 
 ## new features:
