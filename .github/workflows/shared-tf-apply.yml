@@ -39,6 +39,14 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.head_ref || github.ref_name }} # if any previous job did a commit, this ensures those are checkout here
 
+      - name: 📂 Copy TF Import file
+        if: ${{ hashFiles(format('configuration/{0}.import.tf',matrix.workspace)) }}
+        run: cp configuration/${{ matrix.workspace }}.import.tf terraform/${{ matrix.workspace }}.import.tf
+
+      - name: 📂 Copy TF move file
+        if: ${{ hashFiles(format('configuration/{0}.move.tf',matrix.workspace)) }}
+        run: cp configuration/${{ matrix.workspace }}.move.tf terraform/${{ matrix.workspace }}.move.tf
+
       - name: 🗺️ Terraform Plan
         uses: ./.github/actions/terraform-plan
         env:
