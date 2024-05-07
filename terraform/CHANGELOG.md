@@ -1,3 +1,8 @@
+# 0.1.2 ci(gh): [ci] enable deploy (#10)
+
+## patches:
+* fix(tfm): add autoadjust AWS budgets. rename budgets
+
 # 0.1.1 fix(tfm,conf): fixed AWS budgets (#9)
 
 ## patches:
