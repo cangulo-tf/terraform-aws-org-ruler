@@ -23,7 +23,9 @@ inputs:
     required: false
     default: "false"
   export-plan-as-json:
-    description: "boolean to export the terraform plan as json using `terraform show -json`"
+    description: >
+      boolean to export the terraform plan as json using `terraform show -json`
+      output file named as `${var.terraform-plan-file}.json`
     required: true
 
 runs:

@@ -41,6 +41,8 @@ jobs:
 
       - name: 🗺️ Terraform Plan
         uses: ./.github/actions/terraform-plan
+        env:
+          TF_VAR_budget_notification_email: ${{ secrets.EMAIL_ADDRESS_NOTIFICATIONS }}
         with:
           terraform-folder: terraform
           terraform-vars-file: ${{ matrix.tfvars }}
