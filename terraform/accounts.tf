@@ -12,8 +12,13 @@ locals {
 resource "aws_organizations_account" "this" {
   for_each = local.accounts
 
-  name  = each.value.name
-  email = each.value.email
-  # role_name         = each.value.role_name
+  name              = each.value.name
+  email             = each.value.email
+  role_name         = each.value.role_name
   close_on_deletion = each.value.close_on_deletion
+
+  # There is no AWS Organizations API for reading role_name
+  lifecycle {
+    ignore_changes = [role_name]
+  }
 }
