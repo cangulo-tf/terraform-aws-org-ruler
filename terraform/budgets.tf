@@ -3,9 +3,25 @@ locals {
     "cost-daily" = {
       name         = "${local.service_name}-daily-budget"
       budget_type  = "COST"
-      limit_amount = var.budget_daily_limit
+      limit_amount = var.budget_daily_limit_amount
       limit_unit   = "USD"
       time_unit    = "DAILY"
+      notifications = {
+        "actual_100" = {
+          comparison_operator        = "GREATER_THAN"
+          threshold                  = 100
+          threshold_type             = "PERCENTAGE"
+          notification_type          = "ACTUAL"
+          subscriber_email_addresses = [var.budget_notification_email]
+        }
+      }
+    }
+    "cost-monthly" = {
+      name         = "${local.service_name}-monthly-budget"
+      budget_type  = "COST"
+      limit_amount = var.budget_monthly_limit_amount
+      limit_unit   = "USD"
+      time_unit    = "MONTHLY"
       notifications = {
         "actual_100" = {
           comparison_operator        = "GREATER_THAN"
