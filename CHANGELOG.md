@@ -1,3 +1,12 @@
+# 0.1.3 ci(conf): delete import file (#12)
+
+## patches:
+* fix(tfm): ignore change in `role_name` for aws_organizations_account. aws_organizations_account
+* fix(tfm): fix issue with auto_adjust budget. Divided budget resources into 2 separate files
+## others
+* ci(conf): delete import file
+* ci(conf,tfm): imported AWS accounts (#11)
+
 # 0.1.2 ci(gh): [ci] enable deploy (#10)
 
 ## patches:
