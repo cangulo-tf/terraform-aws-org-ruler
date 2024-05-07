@@ -1,3 +1,10 @@
+# 0.1.0 feat(tfm,conf): added AWS budgets (#8)
+
+## new features:
+* feat(tfm,conf): added AWS budgets
+## patches:
+* fix: [cd.yml] updated semver config
+
 # 0.0.3 fix: [cd.yml] updated semver config (#7)
 
 ## patches:
