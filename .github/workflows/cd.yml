@@ -23,7 +23,7 @@ jobs:
           create-gh-release: true
           print-summary: true
           print-annotations: true
-          include-previous-non-releasable-commits: false
+          include-previous-non-releasable-commits: true
 
   list-changes:
     name: 📜 list changes

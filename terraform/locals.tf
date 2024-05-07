@@ -1,3 +1,3 @@
 locals {
-  service_name = "initial-root-infra"
+  service_name = "root-infra"
 }
