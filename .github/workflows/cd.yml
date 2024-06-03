@@ -16,7 +16,7 @@ jobs:
           token: ${{ secrets.CANGULO_BOT_PUSH_COMMITS }} # required for pushing to main, it is a protected branch
 
       - name: release new version
-        uses: cangulo-actions/semver@0.13.2
+        uses: cangulo-actions/semver@0.14.9
         id: semver
         with:
           configuration: .github/commits-semver.yml
