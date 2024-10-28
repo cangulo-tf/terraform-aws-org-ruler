@@ -26,6 +26,6 @@ accounts = {
   }
   "cangulo-pocs" = {
     name  = "cangulo-pocs"
-    email = "cangulo-course-aws-architect.1jfpe@slmail.me"
+    email = "cangulo-pocs.w4nfs@aleeas.com"
   }
 }
